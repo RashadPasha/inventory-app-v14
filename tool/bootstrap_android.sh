@@ -3,6 +3,11 @@ set -euo pipefail
 
 flutter create --platforms=android --project-name muno_inventory --org com.muno365 .
 
+# `flutter create` nümunə widget testi yaradır. Muno Inventory öz tətbiq
+# sinifindən istifadə etdiyi üçün həmin demo testi Android CI-dan çıxarırıq.
+rm -f test/widget_test.dart
+rmdir test 2>/dev/null || true
+
 python3 - <<'PY'
 from pathlib import Path
 p = Path('android/app/src/main/AndroidManifest.xml')
