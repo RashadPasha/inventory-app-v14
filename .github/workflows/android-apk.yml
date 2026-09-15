@@ -23,16 +23,20 @@ jobs:
       - name: Bootstrap Android
         run: bash tool/bootstrap_android.sh
 
-      - name: Enable premium dashboard
+      - name: Enable Muno v2 interface
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p = Path('lib/main.dart')
           s = p.read_text()
           marker = "import 'services/excel_service.dart';"
-          if "import 'premium_dashboard.dart';" not in s:
-              s = s.replace(marker, marker + "\nimport 'premium_dashboard.dart';")
+          additions = "\nimport 'premium_dashboard.dart';\nimport 'app_v2.dart';"
+          if "import 'app_v2.dart';" not in s:
+              s = s.replace(marker, marker + additions)
           s = s.replace('DashboardPage(user: widget.user),', 'PremiumDashboardPage(user: widget.user),', 1)
+          s = s.replace('InventoriesPage(user: widget.user),', 'InventoriesV2Page(user: widget.user),', 1)
+          s = s.replace('ProductsPage(user: widget.user),', 'ProductsV2Page(user: widget.user),', 1)
+          s = s.replace('WarehousesPage(user: widget.user),', 'WarehousesV2Page(user: widget.user),', 1)
           p.write_text(s)
           PY
 
