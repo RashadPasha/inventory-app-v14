@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:cross_file/cross_file.dart';
 import 'package:csv/csv.dart';
 import 'package:excel/excel.dart';
 import 'package:file_picker/file_picker.dart';
@@ -22,26 +21,24 @@ class ExcelService {
   ExcelService(this.db);
   final AppDatabase db;
 
-  Future<_PickedTable?> pickTable() async {
-    final result = await FilePicker.platform.pickFiles(
+  Future<_PickedTable?> _pickTable() async {
+    final file = await FilePicker.pickFile(
       type: FileType.custom,
       allowedExtensions: const ['xlsx', 'csv'],
-      withData: true,
     );
-    if (result == null || result.files.isEmpty) return null;
-    final file = result.files.single;
-    final bytes = file.bytes ?? (file.path == null ? null : await File(file.path!).readAsBytes());
-    if (bytes == null) return null;
+    if (file == null) return null;
+
+    final bytes = await file.readAsBytes();
     final ext = p.extension(file.name).toLowerCase();
     if (ext == '.csv') {
       final text = String.fromCharCodes(bytes);
       final rows = const CsvToListConverter(shouldParseNumbers: false).convert(text);
       return _PickedTable(file.name, rows.map((r) => r.map((e) => e.toString()).toList()).toList());
     }
+
     final book = Excel.decodeBytes(bytes);
     if (book.tables.isEmpty) return _PickedTable(file.name, const []);
     final sheet = book.tables.values.first;
-    if (sheet == null) return _PickedTable(file.name, const []);
     final rows = sheet.rows
         .map((r) => r.map((cell) => cell?.value?.toString().trim() ?? '').toList())
         .toList();
@@ -49,7 +46,7 @@ class ExcelService {
   }
 
   Future<ImportResult?> importProducts(int companyId) async {
-    final table = await pickTable();
+    final table = await _pickTable();
     if (table == null) return null;
     if (table.rows.isEmpty) {
       return const ImportResult(imported: 0, skipped: 0, messages: ['Faylda məlumat tapılmadı.']);
@@ -114,7 +111,7 @@ class ExcelService {
     required int companyId,
     required int warehouseId,
   }) async {
-    final table = await pickTable();
+    final table = await _pickTable();
     if (table == null) return null;
     if (table.rows.isEmpty) {
       return const ImportResult(imported: 0, skipped: 0, messages: ['Faylda məlumat tapılmadı.']);
